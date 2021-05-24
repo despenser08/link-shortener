@@ -12,6 +12,7 @@ FROM node:lts
 
 WORKDIR /usr/src/shortlink
 COPY --from=builder /usr/src/shortlink/dist ./dist
+COPY ./public ./public
 
 COPY package.json .
 COPY yarn.lock .
