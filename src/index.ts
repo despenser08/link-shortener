@@ -22,7 +22,6 @@ import helmet from "helmet";
 import morgan from "morgan";
 import { LinkDB, result } from "./lib/utils";
 import cors from "cors";
-import "dotenv/config";
 
 const app = express();
 app.use(morgan("combined"));
@@ -61,5 +60,5 @@ app.use((err: Error, _: express.Request, res: express.Response) => {
 });
 
 app.listen(process.env.PORT || 8080, () =>
-  console.log(`link-shortener is listening on port ${process.env.PORT || 8080}`)
+  console.log(`link-shortener started.`)
 );
