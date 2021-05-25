@@ -17,6 +17,7 @@
 
 import express from "express";
 import basicAuth from "express-basic-auth";
+import { nanoid } from "nanoid";
 import { LinkDB, result } from "../../lib/utils";
 
 const router = express.Router();
@@ -43,8 +44,12 @@ router.post("/", (req, res) => {
 });
 
 router.put("/", (req, res) => {
-  const { name, link } = req.body;
-  if (!name || !link) return result(res, 400);
+  let { name, link } = req.body;
+  if (!link) return result(res, 400);
+  if (!name) {
+    name = nanoid(6);
+    while (db.get(name)) name = nanoid(6);
+  }
 
   if (db.get(name)) return result(res, 409);
 
