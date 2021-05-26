@@ -16,18 +16,13 @@
  */
 
 import express from "express";
-import basicAuth from "express-basic-auth";
 import { nanoid } from "nanoid";
-import { LinkDB, result } from "../../lib/utils";
+import { auth, LinkDB, result } from "../../lib/utils";
 
 const router = express.Router();
 const db = new LinkDB();
 
-router.use(
-  basicAuth({
-    users: { admin: process.env.ADMIN_PASSWORD as string },
-  })
-);
+router.use(auth);
 
 router.get("/", (_, res) => {
   return result(res, 200, { links: db.urls });

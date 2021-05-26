@@ -16,16 +16,11 @@
  */
 
 import express from "express";
-import basicAuth from "express-basic-auth";
-import { result } from "../../lib/utils";
+import { auth, result } from "../../lib/utils";
 
 const router = express.Router();
 
-router.use(
-  basicAuth({
-    users: { admin: process.env.ADMIN_PASSWORD as string },
-  })
-);
+router.use(auth);
 
 router.all("*", (_, res) => result(res, 501));
 

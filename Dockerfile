@@ -1,6 +1,6 @@
-FROM node:lts AS builder
+FROM node:lts AS BUILDER
 
-WORKDIR /usr/src/shortlink
+WORKDIR /usr/src/link-shortener
 COPY . .
 
 RUN yarn install --frozen-lockfile
@@ -8,11 +8,11 @@ RUN yarn cache clean
 RUN yarn build
 
 
-FROM node:lts
+FROM node:lts as RUNNER
 
-WORKDIR /usr/src/shortlink
-COPY --from=builder /usr/src/shortlink/dist ./dist
-COPY --from=builder /usr/src/shortlink/public ./public
+WORKDIR /usr/src/link-shortener
+COPY --from=builder /usr/src/link-shortener/dist ./dist
+COPY ./public ./public
 
 COPY package.json .
 COPY yarn.lock .

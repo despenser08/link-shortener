@@ -20,8 +20,9 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import morgan from "morgan";
-import { LinkDB, result } from "./lib/utils";
+import { LinkDB, result, setupRoot } from "./lib/utils";
 import cors from "cors";
+import "dotenv/config";
 
 const app = express();
 app.use(morgan("combined"));
@@ -34,6 +35,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 const db = new LinkDB();
+setupRoot();
 
 app.get("/", (_, res) => {
   const link = db.useLink("/");
@@ -54,10 +56,17 @@ app.get("/:link", async (req, res, next) => {
 
 app.use("/api", require("./routers/api"));
 app.use((_, res) => result(res, 404));
-app.use((err: Error, _: express.Request, res: express.Response) => {
-  console.error(err);
-  return result(res, 500);
-});
+app.use(
+  (
+    err: Error,
+    _req: express.Request,
+    res: express.Response,
+    _next: express.NextFunction
+  ) => {
+    console.error(err);
+    return result(res, 500);
+  }
+);
 
 app.listen(process.env.PORT || 8080, () =>
   console.log(`link-shortener started.`)

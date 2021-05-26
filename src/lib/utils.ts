@@ -16,7 +16,10 @@
  */
 
 import { Response } from "express";
+import basicAuth from "express-basic-auth";
 import db from "quick.db";
+import "dotenv/config";
+import bcrypt from "bcrypt";
 
 export type Link = { name: string; link: string; requested: number };
 
@@ -73,6 +76,32 @@ export class LinkDB {
   }
 }
 
+export enum UserPermission {
+  ROOT = 0,
+  ADMIN = 1,
+  EDIT = 2,
+  VIEW = 3,
+}
+
+export type User = {
+  username: string;
+  password: string;
+  permission: UserPermission;
+};
+
+export class UserDB {
+  get(username: string) {
+    return (db.get(`user.${username}`) as User) || undefined;
+  }
+
+  _set(username: string, value: Partial<User>) {
+    return db.set(`user.${username}`, {
+      ...this.get(username),
+      ...value,
+    })[username] as User;
+  }
+}
+
 export function result(
   res: Response,
   code: HTTPCode,
@@ -90,4 +119,37 @@ export enum HTTPCode {
   Conflict = 409,
   "Internal Server Error" = 500,
   "Not Implemented" = 501,
+}
+
+export const auth = basicAuth({
+  authorizer: (username, password, cb) => {
+    const db = new UserDB();
+
+    let user = db.get(username);
+    if (!user) return false;
+
+    bcrypt.compare(password, user.password, cb);
+  },
+  authorizeAsync: true,
+});
+
+export async function setupRoot() {
+  let password = process.env.ROOT_PASSWORD;
+  if (!password) {
+    password = "DefaultRootPassW0rd!";
+    console.warn(
+      "link-shortener is using 'DefaultRootPassW0rd!' for root password to prevent errors. Please set 'ROOT_PASSWORD' environment variable to change root password."
+    );
+  }
+
+  const db = new UserDB();
+  db._set("root", {
+    username: "root",
+    password: await genPassword(password),
+    permission: 0,
+  });
+}
+
+async function genPassword(password: string) {
+  return await bcrypt.hash(password, 10);
 }
