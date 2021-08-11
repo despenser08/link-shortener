@@ -1,4 +1,4 @@
-FROM node:lts-slim AS BUILDER
+FROM node:lts AS BUILDER
 
 WORKDIR /usr/src/link-shortener
 COPY . .
@@ -8,7 +8,7 @@ RUN yarn cache clean
 RUN yarn build
 
 
-FROM node:lts-slim as RUNNER
+FROM node:lts as RUNNER
 
 WORKDIR /usr/src/link-shortener
 COPY --from=builder /usr/src/link-shortener/dist ./dist
