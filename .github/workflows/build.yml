@@ -5,7 +5,7 @@ on:
       - "main"
 
 jobs:
-  test:
+  build:
     name: Build
     runs-on: ubuntu-latest
     steps:
@@ -18,12 +18,21 @@ jobs:
           OWNER="$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')"
           echo "IMG=${IMG}" >> $GITHUB_ENV
           echo "IMAGE=ghcr.io/${OWNER}/${IMG}" >> $GITHUB_ENV
+          echo "GIT_SHA=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v1
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
 
       - name: Login to GitHub Container Registry
         if: github.event_name != 'pull_request'
@@ -37,6 +46,14 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
+          platforms: linux/amd64,linux/arm64
           file: ./Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ env.IMAGE }}:latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
